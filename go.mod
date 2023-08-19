@@ -1,3 +1,3 @@
 module github.com/chon26909/e-commerce
 
-go 1.20
+go 1.21
