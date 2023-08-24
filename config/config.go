@@ -13,6 +13,12 @@ func envPath() string {
 	}
 }
 
+type IConfig interface {
+	App()
+	DB()
+	JWT()
+}
+
 type config struct {
 	app *app
 	db  *db
