@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/chon26909/e-commerce/config"
+	"github.com/chon26909/e-commerce/modules/server"
+	"github.com/chon26909/e-commerce/pkg/database"
 )
 
 func envPath() string {
@@ -18,5 +19,9 @@ func envPath() string {
 func main() {
 	config := config.LoadConfig(envPath())
 
-	fmt.Println(config)
+	db := database.NewDatabase(config.Db())
+	defer db.Close()
+
+	server.NewServer(config, db).Start()
+
 }
