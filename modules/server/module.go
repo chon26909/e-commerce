@@ -1,6 +1,9 @@
 package server
 
 import (
+	"github.com/chon26909/e-commerce/modules/middlewares/middlewaresHandlers"
+	"github.com/chon26909/e-commerce/modules/middlewares/middlewaresRepositories"
+	middlewaresUsecases "github.com/chon26909/e-commerce/modules/middlewares/middlewaresUseCases"
 	monitorhandlers "github.com/chon26909/e-commerce/modules/monitor/MonitorHandlers"
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,6 +22,12 @@ func NewModule(r fiber.Router, s *server) IModuleFactory {
 		router: r,
 		server: s,
 	}
+}
+
+func NewMiddleware(s *server) middlewaresHandlers.IMiddlewaresHandler {
+	repository := middlewaresRepositories.MiddlewaresRepository(s.db)
+	usecase := middlewaresUsecases.MiddlewaresUsecase(repository)
+	return middlewaresHandlers.MiddlewaresHandler(&s.config, usecase)
 }
 
 func (m *moduleFactory) MonitorModule() {
