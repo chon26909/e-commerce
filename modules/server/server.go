@@ -40,6 +40,7 @@ func (s *server) Start() {
 
 	// Middleware
 	middlewares := NewMiddleware(s)
+	s.app.Use(middlewares.Logger())
 	s.app.Use(middlewares.Cors())
 
 	// Modules
