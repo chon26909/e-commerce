@@ -39,3 +39,13 @@ func (obj *UserRegisterRequest) IsEmail() bool {
 
 	return match
 }
+
+type UserPassport struct {
+	User  *User  `json:"user"`
+	Token string `json:"token"`
+}
+
+type UserToken struct {
+	Id          string `db:"id" json:"id"`
+	AccessToken string `db:"access_token" json:"access_token"`
+}
