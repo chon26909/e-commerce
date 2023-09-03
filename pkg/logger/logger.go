@@ -78,7 +78,6 @@ func (l *logger) SetBody(c *fiber.Ctx) {
 	}
 }
 
-// SetQuery implements ILogger.
 func (l *logger) SetQuery(c *fiber.Ctx) {
 	var query any
 	if err := c.QueryParser(&query); err != nil {
