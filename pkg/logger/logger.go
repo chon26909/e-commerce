@@ -63,7 +63,6 @@ func (l *logger) Save() {
 
 }
 
-// SetBody implements ILogger.
 func (l *logger) SetBody(c *fiber.Ctx) {
 	var body any
 	if err := c.BodyParser(&body); err != nil {
