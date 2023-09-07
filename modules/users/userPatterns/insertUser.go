@@ -61,14 +61,14 @@ func (f *userRequest) Customer() (IInsertUser, error) {
 	defer cancel()
 
 	query := `
-		INSERT INTI "users" (
+		INSERT INTO "users" (
 			"email",
 			"password",
 			"username",
 			"role_id"
 		)
 		VALUES 
-			($1, $2, $3, $4)
+			($1, $2, $3, 1)
 		RETURNING "id";
 	`
 
@@ -78,11 +78,11 @@ func (f *userRequest) Customer() (IInsertUser, error) {
 		f.req.Email,
 		f.req.Password,
 		f.req.Username,
-	); err != nil {
+	).Scan(&f.id); err != nil {
 		return nil, fmt.Errorf("insert user failed: %v", err)
 	}
 
-	return nil, nil
+	return f, nil
 }
 
 func (f *userRequest) Admin() (IInsertUser, error) {
@@ -91,11 +91,14 @@ func (f *userRequest) Admin() (IInsertUser, error) {
 
 // Result implements IInsertUser.
 func (f *userRequest) Result() (*users.UserPassport, error) {
+
+	fmt.Println("result")
+
 	query := `
 		SELECT 
 			json_build_object(
-				'user',"t"
-				'token, NULL
+				'user',"t",
+				'token', NULL
 			)
 		FROM (
 			SELECT 
@@ -114,10 +117,14 @@ func (f *userRequest) Result() (*users.UserPassport, error) {
 		return nil, fmt.Errorf("get user failed: %v", err)
 	}
 
+	fmt.Println("user ", data)
+
 	user := new(users.UserPassport)
 	if err := json.Unmarshal(data, &user); err != nil {
 		return nil, fmt.Errorf("get user failed: %v", err)
 	}
+
+	fmt.Println("user ", user)
 
 	return user, nil
 }
