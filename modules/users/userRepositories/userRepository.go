@@ -10,20 +10,21 @@ import (
 
 type IUserRepository interface {
 	InsertUser(req *users.UserRegisterRequest, isAdmin bool) (*users.UserPassport, error)
+	FindOneUserbyEmail(email string) (*users.UserCredentialCheck, error)
 }
 
-type userRepositories struct {
+type userRepository struct {
 	db *sqlx.DB
 }
 
 func NewUserRepositories(db *sqlx.DB) IUserRepository {
-	return &userRepositories{
+	return &userRepository{
 		db: db,
 	}
 }
 
 // InsertUser implements IUserRepository.
-func (r *userRepositories) InsertUser(req *users.UserRegisterRequest, isAdmin bool) (*users.UserPassport, error) {
+func (r *userRepository) InsertUser(req *users.UserRegisterRequest, isAdmin bool) (*users.UserPassport, error) {
 
 	result := userPatterns.InsertUser(r.db, req, isAdmin)
 
@@ -40,11 +41,30 @@ func (r *userRepositories) InsertUser(req *users.UserRegisterRequest, isAdmin bo
 		}
 	}
 
-	fmt.Println("result: ", result)
-
 	user, err := result.Result()
 	if err != nil {
 		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *userRepository) FindOneUserbyEmail(email string) (*users.UserCredentialCheck, error) {
+
+	query := `
+		SELECT 
+			"id",
+			"email",
+			"password",
+			"username",
+			"role_id",
+		FROM "users"
+		WHERE "email" = $1;
+	`
+
+	user := new(users.UserCredentialCheck)
+	if err := r.db.Get(user, query, email); err != nil {
+		return nil, fmt.Errorf("user not found : %v", err)
 	}
 
 	return user, nil
