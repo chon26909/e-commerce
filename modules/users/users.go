@@ -30,7 +30,7 @@ type UserCredentialCheck struct {
 	Email    string `db:"email"`
 	Password string `db:"password"`
 	Username string `db:"username"`
-	RoleId   string `db:"role_id"`
+	RoleId   int    `db:"role_id"`
 }
 
 func (obj *UserRegisterRequest) BcryptHash() error {
@@ -54,8 +54,8 @@ func (obj *UserRegisterRequest) IsEmail() bool {
 }
 
 type UserPassport struct {
-	User  *User  `json:"user"`
-	Token string `json:"token"`
+	User  *User   `json:"user"`
+	Token *string `json:"token"`
 }
 
 type UserToken struct {
