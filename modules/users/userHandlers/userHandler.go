@@ -14,10 +14,12 @@ type userHandlerErrCode string
 
 const (
 	signUpCustomerErr userHandlerErrCode = "users-001"
+	signInErr         userHandlerErrCode = "users-003"
 )
 
 type IUserHandler interface {
 	SignUpCustomer(c *fiber.Ctx) error
+	SignIn(c *fiber.Ctx) error
 }
 
 type userHandler struct {
@@ -58,4 +60,19 @@ func (h *userHandler) SignUpCustomer(c *fiber.Ctx) error {
 	}
 
 	return entities.NewResponse(c).Success(fiber.StatusOK, result).Res()
+}
+
+func (h *userHandler) SignIn(c *fiber.Ctx) error {
+
+	req := new(users.UserCredential)
+	if err := c.BodyParser(req); err != nil {
+		return entities.NewResponse(c).Error(fiber.ErrBadRequest.Code, string(signInErr), err.Error()).Res()
+	}
+
+	passport, err := h.userUsecase.GetPassport(req)
+	if err != nil {
+		return entities.NewResponse(c).Error(fiber.ErrBadRequest.Code, string(signInErr), err.Error()).Res()
+	}
+
+	return entities.NewResponse(c).Success(fiber.StatusOK, passport).Res()
 }
