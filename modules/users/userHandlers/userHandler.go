@@ -23,11 +23,11 @@ type IUserHandler interface {
 }
 
 type userHandler struct {
-	config      *config.IConfig
+	config      config.IConfig
 	userUsecase userUsecases.IUserUsecase
 }
 
-func NewUserHandler(config *config.IConfig, userUsecase userUsecases.IUserUsecase) IUserHandler {
+func NewUserHandler(config config.IConfig, userUsecase userUsecases.IUserUsecase) IUserHandler {
 	return &userHandler{config: config, userUsecase: userUsecase}
 }
 
