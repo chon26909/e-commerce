@@ -1,7 +1,9 @@
 package userRepositories
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/chon26909/e-commerce/modules/users"
 	"github.com/chon26909/e-commerce/modules/users/userPatterns"
@@ -11,6 +13,7 @@ import (
 type IUserRepository interface {
 	InsertUser(req *users.UserRegisterRequest, isAdmin bool) (*users.UserPassport, error)
 	FindOneUserbyEmail(email string) (*users.UserCredentialCheck, error)
+	InsertOAuth(req *users.UserPassport) error
 }
 
 type userRepository struct {
@@ -68,4 +71,32 @@ func (r *userRepository) FindOneUserbyEmail(email string) (*users.UserCredential
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) InsertOAuth(req *users.UserPassport) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
+	defer cancel()
+
+	query := `
+		INSERT INTO "oauth" (
+			"user_id",
+			"refresh_token",
+			"access_token",
+		) 
+		VALUES ($1, $2, $3)
+		RETURNING "id";
+	`
+
+	if err := r.db.QueryRowContext(
+		ctx,
+		query,
+		req.User.Id,
+		req.Token.RefreshToken,
+		req.Token.AccessToken,
+	).Scan(&req.Token.Id); err != nil {
+		return fmt.Errorf("insert oauth failed: %v", err)
+	}
+
+	return nil
 }
