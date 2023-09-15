@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -19,8 +20,8 @@ const (
 )
 
 type auth struct {
-	mapClaims *MapClaims
 	config    config.IJwtConfig
+	mapClaims *MapClaims
 }
 
 type MapClaims struct {
@@ -37,18 +38,29 @@ func jwtTimeDuration(t int) *jwt.NumericDate {
 	return jwt.NewNumericDate(time.Now().Add(time.Duration(int64(t) * int64(math.Pow10(9)))))
 }
 
-func jwtTimeRepeatAdaptre(t int64) *jwt.NumericDate {
-	return jwt.NewNumericDate(time.Unix(t, 0))
+// func jwtTimeRepeatAdaptre(t int64) *jwt.NumericDate {
+// 	return jwt.NewNumericDate(time.Unix(t, 0))
+// }
+
+func (a *auth) SignToken() string {
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
+
+	signedToken, _ := token.SignedString(a.config.SecertKey())
+
+	return signedToken
 }
 
-func NewAuth(tokenType string, config config.IConfig, claims *users.UserClaims) (IAuth, error) {
+func NewAuth(tokenType string, config config.IJwtConfig, claims *users.UserClaims) (IAuth, error) {
 
 	switch tokenType {
 	case string(Access):
 		return newAccessToken(config, claims), nil
+	case string(Refresh):
+		return newRefreshToken(config, claims), nil
+	default:
+		return nil, fmt.Errorf("unknow token type")
 	}
-
-	return nil, nil
 }
 
 func newAccessToken(config config.IJwtConfig, claims *users.UserClaims) IAuth {
@@ -61,6 +73,23 @@ func newAccessToken(config config.IJwtConfig, claims *users.UserClaims) IAuth {
 				Subject:   "access-token",
 				Audience:  []string{"customer", "admin"},
 				ExpiresAt: jwtTimeDuration(config.AccessExpiresAt()),
+				NotBefore: jwt.NewNumericDate(time.Now()),
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+			},
+		},
+	}
+}
+
+func newRefreshToken(config config.IJwtConfig, claims *users.UserClaims) IAuth {
+	return &auth{
+		config: config,
+		mapClaims: &MapClaims{
+			Claims: claims,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:    "shop-api",
+				Subject:   "refresh-token",
+				Audience:  []string{"customer", "admin"},
+				ExpiresAt: jwtTimeDuration(config.RefreshExpiresAt()),
 				NotBefore: jwt.NewNumericDate(time.Now()),
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 			},
