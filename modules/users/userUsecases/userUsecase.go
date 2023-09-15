@@ -6,6 +6,7 @@ import (
 	"github.com/chon26909/e-commerce/config"
 	"github.com/chon26909/e-commerce/modules/users"
 	"github.com/chon26909/e-commerce/modules/users/userRepositories"
+	"github.com/chon26909/e-commerce/pkg/auth"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,11 +16,11 @@ type IUserUsecase interface {
 }
 
 type userUsecase struct {
-	config         *config.IConfig
+	config         config.IConfig
 	userRepository userRepositories.IUserRepository
 }
 
-func NewUserUsecase(config *config.IConfig, userRepository userRepositories.IUserRepository) IUserUsecase {
+func NewUserUsecase(config config.IConfig, userRepository userRepositories.IUserRepository) IUserUsecase {
 	return &userUsecase{config: config, userRepository: userRepository}
 }
 
@@ -49,6 +50,22 @@ func (u *userUsecase) GetPassport(req *users.UserCredential) (*users.UserPasspor
 		return nil, fmt.Errorf("failed to compare password")
 	}
 
+	accessToken, err := auth.NewAuth(string(auth.Access), u.config.Jwt(), &users.UserClaims{
+		Id:     user.Id,
+		RoleId: user.RoleId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := auth.NewAuth(string(auth.Refresh), u.config.Jwt(), &users.UserClaims{
+		Id:     user.Id,
+		RoleId: user.RoleId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	passport := &users.UserPassport{
 		User: &users.User{
 			Id:       user.Id,
@@ -56,7 +73,10 @@ func (u *userUsecase) GetPassport(req *users.UserCredential) (*users.UserPasspor
 			UserName: user.Username,
 			RoleId:   user.RoleId,
 		},
-		Token: nil,
+		Token: &users.UserToken{
+			AccessToken:  accessToken.SignToken(),
+			RefreshToken: refreshToken.SignToken(),
+		},
 	}
 
 	return passport, nil
