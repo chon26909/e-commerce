@@ -79,5 +79,9 @@ func (u *userUsecase) GetPassport(req *users.UserCredential) (*users.UserPasspor
 		},
 	}
 
+	if err := u.userRepository.InsertOAuth(passport); err != nil {
+		return nil, err
+	}
+
 	return passport, nil
 }
