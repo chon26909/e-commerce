@@ -54,8 +54,8 @@ func (obj *UserRegisterRequest) IsEmail() bool {
 }
 
 type UserPassport struct {
-	User  *User   `json:"user"`
-	Token *string `json:"token"`
+	User  *User      `json:"user"`
+	Token *UserToken `json:"token"`
 }
 
 type UserToken struct {
