@@ -10,7 +10,7 @@ import (
 type User struct {
 	Id       string `db:"id" json:"id"`
 	Email    string `db:"email" json:"email"`
-	UserName string `db:"user_name" json:"user_name"`
+	UserName string `db:"username" json:"username"`
 	RoleId   int    `db:"role_id" json:"role_id"`
 }
 
@@ -67,4 +67,8 @@ type UserToken struct {
 type UserClaims struct {
 	Id     string `db:"id" json:"id"`
 	RoleId int    `db:"role" json:"role"`
+}
+
+type UserRefreshCredential struct {
+	RefreshToken string `json:"refresh_token"`
 }
