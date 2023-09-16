@@ -60,7 +60,7 @@ func (r *userRepository) FindOneUserbyEmail(email string) (*users.UserCredential
 			"email",
 			"password",
 			"username",
-			"role_id",
+			"role_id"
 		FROM "users"
 		WHERE "email" = $1;
 	`
@@ -82,7 +82,7 @@ func (r *userRepository) InsertOAuth(req *users.UserPassport) error {
 		INSERT INTO "oauth" (
 			"user_id",
 			"refresh_token",
-			"access_token",
+			"access_token"
 		) 
 		VALUES ($1, $2, $3)
 		RETURNING "id";
