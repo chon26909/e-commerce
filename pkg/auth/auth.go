@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -49,6 +50,23 @@ func (a *auth) SignToken() string {
 	signedToken, _ := token.SignedString(a.config.SecertKey())
 
 	return signedToken
+}
+
+func ParseToken(config config.IJwtConfig, tokenString string) (*auth, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("signing method invalid: %v", t.Method)
+		}
+		return config.SecertKey(), nil
+	})
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenMalformed) {
+
+		}
+	}
+
+	return nil, nil
 }
 
 func NewAuth(tokenType string, config config.IJwtConfig, claims *users.UserClaims) (IAuth, error) {
