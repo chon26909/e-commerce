@@ -86,14 +86,50 @@ func (u *userUsecase) GetPassport(req *users.UserCredential) (*users.UserPasspor
 	return passport, nil
 }
 
-func (u *userUsecase) RefreshPassword(req *users.UserRefreshCredential) (*users.UserPassport, error) {
+func (u *userUsecase) RefreshPassport(req *users.UserRefreshCredential) (*users.UserPassport, error) {
 
 	claims, err := auth.ParseToken(u.config.Jwt(), req.RefreshToken)
 	if err != nil {
 		return nil, err
 	}
 
-	oauth, err := u.userRepository
+	oauth, err := u.userRepository.FindOneOauth(req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	profile, err := u.userRepository.GetProfile(oauth.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	newClaims := &users.UserClaims{
+		Id:     profile.Id,
+		RoleId: profile.RoleId,
+	}
+
+	accessToken, err := auth.NewAuth(string(auth.Access), u.config.Jwt(), newClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken := auth.RepeatToken(u.config.Jwt(), newClaims, claims.ExpiresAt.Unix())
+	if err != nil {
+		return nil, err
+	}
+
+	passport := &users.UserPassport{
+		User: profile,
+		Token: &users.UserToken{
+			Id:           oauth.Id,
+			AccessToken:  accessToken.SignToken(),
+			RefreshToken: refreshToken,
+		},
+	}
+
+	if err := u.userRepository.UpdateOauth(passport.Token); err != nil {
+		return nil, err
+	}
+
+	return passport, nil
 }
