@@ -39,9 +39,9 @@ func jwtTimeDuration(t int) *jwt.NumericDate {
 	return jwt.NewNumericDate(time.Now().Add(time.Duration(int64(t) * int64(math.Pow10(9)))))
 }
 
-// func jwtTimeRepeatAdaptre(t int64) *jwt.NumericDate {
-// 	return jwt.NewNumericDate(time.Unix(t, 0))
-// }
+func jwtTimeRepeatAdaptre(t int64) *jwt.NumericDate {
+	return jwt.NewNumericDate(time.Unix(t, 0))
+}
 
 func (a *auth) SignToken() string {
 
@@ -52,7 +52,7 @@ func (a *auth) SignToken() string {
 	return signedToken
 }
 
-func ParseToken(config config.IJwtConfig, tokenString string) (*auth, error) {
+func ParseToken(config config.IJwtConfig, tokenString string) (*MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MapClaims{}, func(t *jwt.Token) (interface{}, error) {
 
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -62,11 +62,38 @@ func ParseToken(config config.IJwtConfig, tokenString string) (*auth, error) {
 	})
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenMalformed) {
-
+			return nil, fmt.Errorf("token format invalid: %v", err)
+		} else if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, fmt.Errorf("token had expired: %v", err)
+		} else {
+			return nil, fmt.Errorf("parse token failed: %v", err)
 		}
 	}
 
-	return nil, nil
+	if claims, ok := token.Claims.(*MapClaims); ok {
+		return claims, nil
+	} else {
+		return nil, fmt.Errorf("claims type invalid: %v", token.Claims)
+	}
+}
+
+func RepeatToken(config config.IJwtConfig, claims *users.UserClaims, exp int64) string {
+	obj := &auth{
+		config: config,
+		mapClaims: &MapClaims{
+			Claims: claims,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:    "shop-api",
+				Subject:   "refresh-token",
+				Audience:  []string{"customer", "admin"},
+				ExpiresAt: jwtTimeRepeatAdaptre(exp),
+				NotBefore: jwt.NewNumericDate(time.Now()),
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+			},
+		},
+	}
+
+	return obj.SignToken()
 }
 
 func NewAuth(tokenType string, config config.IJwtConfig, claims *users.UserClaims) (IAuth, error) {
