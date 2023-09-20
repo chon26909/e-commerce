@@ -85,3 +85,15 @@ func (u *userUsecase) GetPassport(req *users.UserCredential) (*users.UserPasspor
 
 	return passport, nil
 }
+
+func (u *userUsecase) RefreshPassword(req *users.UserRefreshCredential) (*users.UserPassport, error) {
+
+	claims, err := auth.ParseToken(u.config.Jwt(), req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	oauth, err := u.userRepository
+
+	return nil
+}
