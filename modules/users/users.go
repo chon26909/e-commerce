@@ -72,3 +72,8 @@ type UserClaims struct {
 type UserRefreshCredential struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type Oauth struct {
+	Id     string `db:"id" json:"id"`
+	UserId string `db:"user_id" json:"user_id"`
+}
