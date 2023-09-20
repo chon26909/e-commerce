@@ -14,6 +14,9 @@ type IUserRepository interface {
 	InsertUser(req *users.UserRegisterRequest, isAdmin bool) (*users.UserPassport, error)
 	FindOneUserbyEmail(email string) (*users.UserCredentialCheck, error)
 	InsertOAuth(req *users.UserPassport) error
+	FindOneOauth(refreshToken string) (*users.Oauth, error)
+	UpdateOauth(req *users.UserToken) error
+	GetProfile(userId string) (*users.User, error)
 }
 
 type userRepository struct {
@@ -131,4 +134,23 @@ func (r *userRepository) UpdateOauth(req *users.UserToken) error {
 	}
 
 	return nil
+}
+
+func (r userRepository) GetProfile(userId string) (*users.User, error) {
+
+	query := ` 
+		SELECT
+        	"id",
+        	"email",
+        	"username",
+        	"role_id"
+    	FROM "users"
+    	WHERE "id" = $1;`
+
+	profile := new(users.User)
+
+	if err := r.db.Get(profile, query, userId); err != nil {
+		return nil, fmt.Errorf("get user failed: %v", err)
+	}
+	return profile, nil
 }
