@@ -77,3 +77,7 @@ type Oauth struct {
 	Id     string `db:"id" json:"id"`
 	UserId string `db:"user_id" json:"user_id"`
 }
+
+type UserRemoveCreadential struct {
+	OauthId string `db:"id" json:"oauth_id"`
+}
