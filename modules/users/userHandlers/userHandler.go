@@ -114,5 +114,5 @@ func (h *userHandler) SignOut(c *fiber.Ctx) error {
 		).Res()
 	}
 
-	return entities.NewResponse(c).Success(fiber.StatusOK, nil).Res()
+	return entities.NewResponse(c).Success(fiber.StatusOK, "signout success").Res()
 }
