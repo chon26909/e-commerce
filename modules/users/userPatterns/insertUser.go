@@ -86,7 +86,33 @@ func (f *userRequest) Customer() (IInsertUser, error) {
 }
 
 func (f *userRequest) Admin() (IInsertUser, error) {
-	return nil, nil
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	query := `
+		INSERT INTO "users" (
+			"email",
+			"password",
+			"username",
+			"role_id"
+		)
+		VALUES 
+			($1, $2, $3, 2)
+		RETURNING "id";
+	`
+
+	if err := f.db.QueryRowContext(
+		ctx,
+		query,
+		f.req.Email,
+		f.req.Password,
+		f.req.Username,
+	).Scan(&f.id); err != nil {
+		return nil, fmt.Errorf("insert user failed: %v", err)
+	}
+
+	return f, nil
 }
 
 // Result implements IInsertUser.
