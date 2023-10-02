@@ -3,6 +3,7 @@ package middlewaresRepositories
 import "github.com/jmoiron/sqlx"
 
 type IMiddlewaresRepository interface {
+	FindAccessToken(userId string, accessToken string) bool
 }
 
 type middlewaresRepository struct {
