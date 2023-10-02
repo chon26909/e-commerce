@@ -23,6 +23,7 @@ type IUserHandler interface {
 	SignUpCustomer(c *fiber.Ctx) error
 	SignIn(c *fiber.Ctx) error
 	RefreshPassport(c *fiber.Ctx) error
+	SignOut(c *fiber.Ctx) error
 }
 
 type userHandler struct {
