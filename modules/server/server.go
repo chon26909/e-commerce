@@ -45,7 +45,7 @@ func (s *server) Start() {
 
 	// Modules
 	v1 := s.app.Group("v1")
-	modules := NewModule(v1, s)
+	modules := NewModule(v1, s, middlewares)
 
 	modules.MonitorModule()
 	modules.UsersModule()
