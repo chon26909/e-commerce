@@ -12,6 +12,7 @@ import (
 
 type IUserUsecase interface {
 	InsertCustomer(req *users.UserRegisterRequest) (*users.UserPassport, error)
+	InsertAdmin(req *users.UserRegisterRequest) (*users.UserPassport, error)
 	GetPassport(req *users.UserCredential) (*users.UserPassport, error)
 	RefreshPassport(req *users.UserRefreshCredential) (*users.UserPassport, error)
 	DeleteOauth(oauthId string) error
@@ -35,6 +36,22 @@ func (u *userUsecase) InsertCustomer(req *users.UserRegisterRequest) (*users.Use
 
 	// insert user
 	result, err := u.userRepository.InsertUser(req, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (u *userUsecase) InsertAdmin(req *users.UserRegisterRequest) (*users.UserPassport, error) {
+
+	// hashing a password
+	if err := req.BcryptHash(); err != nil {
+		return nil, err
+	}
+
+	// insert user
+	result, err := u.userRepository.InsertUser(req, true)
 	if err != nil {
 		return nil, err
 	}
