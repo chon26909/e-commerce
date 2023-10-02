@@ -17,21 +17,23 @@ type IModuleFactory interface {
 }
 
 type moduleFactory struct {
-	router fiber.Router
-	server *server
+	router     fiber.Router
+	server     *server
+	middleware middlewaresHandlers.IMiddlewaresHandler
 }
 
-func NewModule(r fiber.Router, s *server) IModuleFactory {
+func NewModule(r fiber.Router, s *server, m middlewaresHandlers.IMiddlewaresHandler) IModuleFactory {
 	return &moduleFactory{
-		router: r,
-		server: s,
+		router:     r,
+		server:     s,
+		middleware: m,
 	}
 }
 
 func NewMiddleware(s *server) middlewaresHandlers.IMiddlewaresHandler {
 	repository := middlewaresRepositories.MiddlewaresRepository(s.db)
 	usecase := middlewaresUsecases.MiddlewaresUsecase(repository)
-	return middlewaresHandlers.MiddlewaresHandler(&s.config, usecase)
+	return middlewaresHandlers.MiddlewaresHandler(s.config, usecase)
 }
 
 func (m *moduleFactory) MonitorModule() {
@@ -52,5 +54,5 @@ func (m *moduleFactory) UsersModule() {
 	router.Post("/refresh", handler.RefreshPassport)
 	router.Post("/signout", handler.SignOut)
 
-	router.Get("/admin-token", handler.GenerateAdminToken)
+	router.Get("/admin-token", m.middleware.JwtAuth(), handler.GenerateAdminToken)
 }
