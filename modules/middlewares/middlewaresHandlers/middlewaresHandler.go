@@ -1,9 +1,12 @@
 package middlewaresHandlers
 
 import (
+	"strings"
+
 	"github.com/chon26909/e-commerce/config"
 	"github.com/chon26909/e-commerce/modules/entities"
 	middlewaresUsecases "github.com/chon26909/e-commerce/modules/middlewares/middlewaresUseCases"
+	"github.com/chon26909/e-commerce/pkg/auth"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -13,20 +16,22 @@ type middlewareHandlersErrCode string
 
 const (
 	routerCheckError middlewareHandlersErrCode = "M-0001"
+	jwtAuthErr       middlewareHandlersErrCode = "M-0002"
 )
 
 type IMiddlewaresHandler interface {
 	Cors() fiber.Handler
 	RouterCheck() fiber.Handler
 	Logger() fiber.Handler
+	JwtAuth() fiber.Handler
 }
 
 type middlewaresHandler struct {
-	config            *config.IConfig
+	config            config.IConfig
 	middlewareUsecase middlewaresUsecases.IMiddlewaresUsecase
 }
 
-func MiddlewaresHandler(c *config.IConfig, u middlewaresUsecases.IMiddlewaresUsecase) IMiddlewaresHandler {
+func MiddlewaresHandler(c config.IConfig, u middlewaresUsecases.IMiddlewaresUsecase) IMiddlewaresHandler {
 	return &middlewaresHandler{config: c, middlewareUsecase: u}
 }
 
@@ -61,4 +66,34 @@ func (h *middlewaresHandler) Logger() fiber.Handler {
 		TimeFormat: "01/02/2006",
 		TimeZone:   "Bangkok/Asia",
 	})
+}
+
+func (h *middlewaresHandler) JwtAuth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		token := strings.TrimPrefix(c.Get("Authorization"), "Bearer ")
+		result, err := auth.ParseToken(h.config.Jwt(), token)
+		if err != nil {
+			return entities.NewResponse(c).Error(
+				fiber.ErrUnauthorized.Code,
+				string(jwtAuthErr),
+				err.Error(),
+			).Res()
+		}
+
+		claims := result.Claims
+
+		if !h.middlewareUsecase.FindAccessToken(claims.Id, token) {
+			return entities.NewResponse(c).Error(
+				fiber.ErrUnauthorized.Code,
+				string(jwtAuthErr),
+				"permission denied",
+			).Res()
+		}
+
+		c.Locals("userId", claims.Id)
+		c.Locals("userRoleId", claims.RoleId)
+
+		return c.Next()
+	}
 }
